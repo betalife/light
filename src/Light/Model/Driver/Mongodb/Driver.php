@@ -275,11 +275,11 @@ class Driver extends Model\Driver\DriverAbstract
       "query" => $cond
     ]);
 
-    $cursor = $this
-      ->getManager()
-      ->executeCommand($this->getConfig()['db'], $command);
-
     try {
+      $cursor = $this
+        ->getManager()
+        ->executeCommand($this->getConfig()['db'], $command);
+
       $res = current($cursor->toArray());
       return $res->n;
     } catch (Exception $e) {

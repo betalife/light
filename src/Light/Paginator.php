@@ -121,10 +121,8 @@ class Paginator
    */
   public function count()
   {
-
     /** @var Model $modelClassName */
     $modelClassName = get_class($this->_model);
-
     return $modelClassName::count($this->_cond);
   }
 

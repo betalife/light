@@ -60,52 +60,20 @@ class Form
   public $_returnUrl = null;
 
   /**
-   * Form constructor.
-   *
-   * @param array $options
-   * @param array $elements
+   * @return ElementAbstract[]
    */
-  public function __construct(array $options = [], array $elements = [])
+  public function getElements(): array
   {
-    foreach ($options as $name => $value) {
-
-      if (is_callable([$this, 'set' . ucfirst($name)])) {
-        call_user_func_array([$this, 'set' . ucfirst($name)], [$value]);
-      }
-    }
-
-    $this->init($this->data);
-
-    $this->addElements($elements);
-
-    foreach ($this->getElements() as $element) {
-      $element->init();
-    }
+    return $this->elements;
   }
 
   /**
-   * @param null $model
-   * @param ElementAbstract[]|null $elements
+   * @param string $name
+   * @return ElementAbstract
    */
-  public function init($model = null, array $elements = [])
+  public function getElement(string $name): ElementAbstract
   {
-    if ($model && is_subclass_of($model, Model::class)) {
-
-      $this->addElement(
-        new Hidden('id', [
-          'value' => $model->id,
-          'allowNull' => true
-        ])
-      );
-    }
-  }
-
-  /**
-   * @param ElementAbstract $element
-   */
-  public function addElement(ElementAbstract $element)
-  {
-    $this->elements[$element->getName()] = $element;
+    return $this->elements[$name];
   }
 
   /**
@@ -136,12 +104,11 @@ class Form
   }
 
   /**
-   * @param string $name
-   * @return ElementAbstract
+   * @param ElementAbstract $element
    */
-  public function getElement(string $name): ElementAbstract
+  public function addElement(ElementAbstract $element)
   {
-    return $this->elements[$name];
+    $this->elements[$element->getName()] = $element;
   }
 
   /**
@@ -176,14 +143,6 @@ class Form
     }
 
     return $values;
-  }
-
-  /**
-   * @return ElementAbstract[]
-   */
-  public function getElements(): array
-  {
-    return $this->elements;
   }
 
   /**
@@ -322,6 +281,24 @@ class Form
   }
 
   /**
+   * Form constructor.
+   *
+   * @param array $options
+   * @param array $elements
+   */
+  public function __construct(array $options = [], array $elements = [])
+  {
+    foreach ($options as $name => $value) {
+
+      if (is_callable([$this, 'set' . ucfirst($name)])) {
+        call_user_func_array([$this, 'set' . ucfirst($name)], [$value]);
+      }
+    }
+
+    $this->init($this->data, $elements);
+  }
+
+  /**
    * @return false|string
    * @throws \Exception
    */
@@ -336,6 +313,29 @@ class Form
     $this->view->assign('form', $this);
 
     return $this->view->render();
+  }
+
+  /**
+   * @param null $model
+   * @param ElementAbstract[]|null $elements
+   */
+  public function init($model = null, array $elements = [])
+  {
+    if ($model && is_subclass_of($model, Model::class)) {
+
+      $this->addElement(
+        new Hidden('id', [
+          'value' => $model->id,
+          'allowNull' => true
+        ])
+      );
+    }
+
+    $this->addElements($elements);
+
+    foreach ($this->getElements() as $element) {
+      $element->init();
+    }
   }
 
   /**
