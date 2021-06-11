@@ -161,8 +161,8 @@ class Paginator
     $itemsPerPage = $this->_itemsPerPage;
     $range = 5;
 
-    if ($totalCount <= $itemsPerPage) {
-      return false;
+    if (!$totalCount) {
+      return null;
     }
 
     $prev = $currentPage != 1 ? $currentPage - 1 : false;

@@ -8,7 +8,7 @@ foreach ($this->header as $key => $col) : ?>
   <?php $col['type'] = $col['type'] ?? 'text'; ?>
 
   <?php if ($col['type'] == 'bool') : ?>
-    <td class="<?php if (empty($col['static']) && $index > 0) : ?>hidden-xs <?php endif; ?> text-center">
+    <td style="width: 100px" class="<?php if (empty($col['static']) && $index > 0) : ?>hidden-xs <?php endif; ?> text-center">
       <?php if ($this->row->$key) : ?>
         <span class="indicator bmd-bg-success"></span>
       <?php else: ?>
@@ -42,7 +42,7 @@ foreach ($this->header as $key => $col) : ?>
     </td>
 
   <?php elseif ($col['type'] == 'datetime') : ?>
-    <td <?php if (empty($col['static']) && $index > 0) : ?> class="hidden-xs" <?php endif; ?>>
+    <td style="width: 150px" <?php if (empty($col['static']) && $index > 0) : ?> class="hidden-xs" <?php endif; ?>>
       <?php echo date('Y/m/d в H:i', $this->row->$key); ?>
     </td>
 

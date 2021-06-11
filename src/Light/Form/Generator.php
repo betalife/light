@@ -36,14 +36,14 @@ class Generator extends Form
     $elements = array_merge_recursive(
       array_filter([
 
-        'General' => array_filter([
+        'Общие настройки' => array_filter([
           $this->url(),
           $this->enabled(),
           $this->date(),
           $this->dateTime()
         ]),
 
-        'Content' => array_filter([
+        'Содержимое' => array_filter([
           $this->title(),
           $this->subTitle(),
           $this->description(),
@@ -111,7 +111,7 @@ class Generator extends Form
     return !$this->modelHasProperty('enabled') ? null :
       new Checkbox('enabled', [
         'value' => $this->data->enabled,
-        'label' => 'Enabled'
+        'label' => 'Активность'
       ]);
   }
 
@@ -123,7 +123,7 @@ class Generator extends Form
     return !$this->modelHasProperty('date') ? null :
       new Form\Element\Date('date', [
         'value' => $this->data->date,
-        'label' => 'Date',
+        'label' => 'Дата',
         'allowNull' => true
       ]);
   }
@@ -136,7 +136,7 @@ class Generator extends Form
     return !$this->modelHasProperty('dateTime') ? null :
       new Form\Element\DateTime('dateTime', [
         'value' => $this->data->dateTime,
-        'label' => 'Date/Time',
+        'label' => 'Дата/Время',
         'allowNull' => true
       ]);
   }
@@ -149,9 +149,9 @@ class Generator extends Form
     return !$this->modelHasProperty('title') ? null :
       new Text('title', [
         'value' => $this->data->title,
-        'label' => 'Title',
+        'label' => 'Заголовок',
         'filters' => [Trim::class],
-        'allowNull' => true
+        'allowNull' => false
       ]);
   }
 
@@ -163,7 +163,7 @@ class Generator extends Form
     return !$this->modelHasProperty('subTitle') ? null :
       new Text('subTitle', [
         'value' => $this->data->subTitle,
-        'label' => 'Subtitle',
+        'label' => 'Подзаголовок',
         'filters' => [Trim::class],
         'allowNull' => true
       ]);
@@ -177,7 +177,7 @@ class Generator extends Form
     return !$this->modelHasProperty('description') ? null :
       new Textarea('description', [
         'value' => $this->data->description,
-        'label' => 'Description',
+        'label' => 'Описание',
         'allowNull' => true,
         'filters' => [Trim::class],
       ]);
@@ -191,7 +191,7 @@ class Generator extends Form
     return !$this->modelHasProperty('image') ? null :
       new Image('image', [
         'value' => $this->data->image,
-        'label' => 'Image',
+        'label' => 'Изображение',
         'allowNull' => true
       ]);
   }
@@ -204,7 +204,7 @@ class Generator extends Form
     return !$this->modelHasProperty('images') ? null :
       new Images('images', [
         'value' => $this->data->images,
-        'label' => 'Images'
+        'label' => 'Изображения'
       ]);
   }
 
@@ -218,7 +218,7 @@ class Generator extends Form
       $this->data->getMeta()->getPropertyWithName('content')->getType() == 'string')
       ? new Trumbowyg('content', [
         'value' => $this->data->content,
-        'label' => 'Content'
+        'label' => 'Контент'
       ])
       : null;
   }
@@ -234,7 +234,7 @@ class Generator extends Form
     )
       ? new TrumbowygResponsive('content', [
         'value' => $this->data->content,
-        'label' => 'Content'
+        'label' => 'Контент'
       ])
       : null;
   }

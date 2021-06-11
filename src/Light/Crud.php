@@ -53,6 +53,7 @@ abstract class Crud extends AuthCrud
       ));
 
       $header = [];
+      $filter = [];
 
       foreach ($cruds as $crud) {
 
@@ -83,18 +84,69 @@ abstract class Crud extends AuthCrud
           unset($prop[0]);
 
           $prop = array_map(function ($item) {
-            return trim(str_replace(['{', ',', '}'], null, $item));
+            return trim(str_replace(['[', ',', ']'], null, $item));
           }, $prop);
 
-          $header[$prop[2]] = [
-            'title' => $prop[1],
-            'static' => $prop[3] ?? "false" == "true",
-          ];
-
-          if (isset($prop[4])) {
-            $header[$prop[2]]['type'] = $prop[4];
+          if ($prop[2] == 'text') {
+            $header[$prop[3]] = [
+              'title' => $prop[1],
+              'static' => $prop[4] ?? "false" == "true"
+            ];
+          } else if ($prop[2] == 'bool') {
+            $header[$prop[3]] = [
+              'title' => $prop[1],
+              'type' => 'bool',
+              'static' => $prop[4] ?? "false" == "true"
+            ];
+          } else if ($prop[2] == 'model') {
+            $header[$prop[3]] = [
+              'type' => 'model',
+              'title' => $prop[1],
+              'field' => $prop[4],
+              'model' => $prop[5],
+              'static' => $prop[6] ?? "false" == "true"
+            ];
+          } else if ($prop[2] == 'dateTime') {
+            $header[$prop[3]] = [
+              'type' => 'datetime',
+              'title' => $prop[1],
+              'static' => $prop[6] ?? "false" == "true"
+            ];
+          } else if ($prop[2] == 'image') {
+            $header[$prop[2]] = [
+              'type' => 'image',
+              'title' => $prop[1],
+              'static' => $prop[3] ?? "false" == "true"
+            ];
           }
           continue;
+        }
+
+        if ($prop[0] == '@crud-filter') {
+
+          unset($prop[0]);
+
+          $prop = array_map(function ($item) {
+            return trim(str_replace(['[', ',', ']'], null, $item));
+          }, $prop);
+
+          $type = $prop[1];
+          unset($prop[1]);
+
+          $filterItem = [];
+
+          if ($type == 'search') {
+            $filterItem = ['type' => 'search', 'by' => []];
+
+            foreach ($prop as $item) {
+              $filterItem['by'][] = $item;
+            }
+          } else if ($type == 'model') {
+            $filterItem = ['type' => 'model', 'by' => $prop[2], 'field' => $prop[3], 'model' => $prop['4']];
+          } else if ($type == 'datetime') {
+            $filterItem = ['type' => 'datetime', 'by' => $prop[2]];
+          }
+          $filter[] = $filterItem;
         }
       }
 
@@ -109,20 +161,22 @@ abstract class Crud extends AuthCrud
           $model = new $modelClassName;
 
           if ($model->getMeta()->hasProperty('image')) {
-            $header['image'] = ['title' => 'Image', 'type' => 'image', 'static' => true];
+            $header['image'] = ['title' => 'Рис.', 'type' => 'image', 'static' => true];
           }
           if ($model->getMeta()->hasProperty('title')) {
-            $header['title'] = ['title' => 'Title', 'static' => true];
+            $header['title'] = ['title' => 'Заголовок', 'static' => true];
           }
           if ($model->getMeta()->hasProperty('enabled')) {
-            $header['enabled'] = ['title' => 'Enabled', 'type' => 'bool'];
+            $header['enabled'] = ['title' => 'Активность', 'type' => 'bool'];
           }
         }
       }
 
       $this->header = $this->header ?? $header;
+      $this->filter = $this->filter ?? $filter;
 
     } catch (Exception $e) {
+      throw $e;
       throw new Exception('Error parsing crud-line ' . $crud);
     }
   }
@@ -445,9 +499,13 @@ abstract class Crud extends AuthCrud
       $this->getSorting()
     );
 
-    $paginator->setPage(
-      intval($this->getRequest()->getGet('page', 1))
-    );
+    $page = $this->getParam('page', '1');
+
+    if (!strlen($page)) {
+      $page = 1;
+    }
+
+    $paginator->setPage(intval($page));
 
     $paginator->setItemsPerPage(
       $this->getItemsPerPage()
@@ -461,7 +519,7 @@ abstract class Crud extends AuthCrud
    */
   public function getItemsPerPage()
   {
-    return 10;
+    return 30;
   }
 
   /**

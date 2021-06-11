@@ -6,9 +6,11 @@ $emptyRow->id = null;
 
 $selectedRow = null;
 
-foreach ($this->filter['model'] as $model) {
-  if ($this->filter['value'] == $model->id) {
-    $selectedRow = $model;
+$model = $this->filter['model']::fetchAll();
+
+foreach ($model as $row) {
+  if ($this->filter['value'] == $row->id) {
+    $selectedRow = $row;
   }
 }
 
@@ -28,12 +30,12 @@ if (!$selectedRow) {
     <ul class="dropdown-menu">
       <li><a data-option="<?php echo $emptyRow->id; ?>" data-value="<?php echo $emptyRow->title; ?>"><?php echo $emptyRow->title; ?></a></li>
       <li class="divider"></li>
-      <?php foreach ($this->filter['model'] as $model) : ?>
+      <?php foreach ($model as $row) : ?>
         <li>
-          <a <?php if ($this->filter['value'] == $model->id) : ?> class="bmd-bg-primary bmd-text-grey-50" <?php endif; ?>
-            data-option="<?php echo $model->id; ?>"
-            data-value="<?php echo $model->{$this->filter['field']}; ?>">
-            <?php echo $model->{$this->filter['field']}; ?>
+          <a <?php if ($this->filter['value'] == $row->id) : ?> class="bmd-bg-primary bmd-text-grey-50" <?php endif; ?>
+            data-option="<?php echo $row->id; ?>"
+            data-value="<?php echo $row->{$this->filter['field']}; ?>">
+            <?php echo $row->{$this->filter['field']}; ?>
           </a>
         </li>
       <?php endforeach; ?>

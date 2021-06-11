@@ -13,6 +13,11 @@ class MultiSelectKeyValue extends ElementAbstract
   /**
    * @var string
    */
+  public $elementTemplate = 'element/multi-select-key-value';
+
+  /**
+   * @var string
+   */
   public $keyLabel = 'Key';
 
   /**

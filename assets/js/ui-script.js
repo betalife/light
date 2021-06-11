@@ -50,6 +50,10 @@ $(document).ready(function () {
     modal.container('<img class="full-screen-image" src="' + $(this).data('image-large') + '" />');
   });
 
+  $(document).on('click', '[data-pdf-large]', function () {
+    modal.container('<iframe class="google-pdf-viewer" src="https://drive.google.com/viewer?embedded=true&url=' + $(this).data('pdf-large') + '"></iframe>');
+  });
+
   function normalizeUi() {
 
     $('[data-toggle="tooltip"][data-bmd-state]').each(function () {

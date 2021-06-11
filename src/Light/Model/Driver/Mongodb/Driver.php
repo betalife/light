@@ -270,6 +270,10 @@ class Driver extends Model\Driver\DriverAbstract
 
     $cond = $this->_normalizeDataTypes($cond);
 
+    if (!count($cond)) {
+      $cond = null;
+    }
+
     $command = new Command([
       "count" => $this->getModel()->getMeta()->getCollection(),
       "query" => $cond

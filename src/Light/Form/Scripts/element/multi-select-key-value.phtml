@@ -1,4 +1,4 @@
-<?php /** @var \App\Module\Admin\Form\Element\MultiSelectKeyValue\MultiSelectKeyValue $element */ ?>
+<?php /** @var \Light\Form\Element\MultiSelectKeyValue $element */ ?>
 <?php $element = $this->element; ?>
 
 <style>
@@ -18,7 +18,7 @@
               <input data-type-key="1" type="text" class="bmd-input"
                      id="<?php echo $element->getName(); ?>"
                      name="<?php echo $element->getName(); ?>[<?php echo $index; ?>][key]"
-                     value="<?php echo $value['key'] ?: ''; ?>">
+                     value="<?php echo $value['key'] ?? null ?: ''; ?>">
 
               <label class="bmd-label up" data-initialized="true"><?php echo $element->getKeyLabel(); ?></label>
               <span class="bmd-bar"></span>
@@ -34,7 +34,7 @@
               <input data-type-value="1" type="text" class="bmd-input"
                      id="<?php echo $element->getName(); ?>"
                      name="<?php echo $element->getName(); ?>[<?php echo $index; ?>][value]"
-                     value="<?php echo $value['value'] ?: ''; ?>">
+                     value="<?php echo $value['value'] ?? null ?: ''; ?>">
 
               <label class="bmd-label up" data-initialized="true"><?php echo $element->getValueLabel(); ?></label>
               <span class="bmd-bar"></span>
@@ -50,7 +50,7 @@
     <?php endforeach; ?>
   </div>
 
-  <a data-add-multi="true" class="btn btn-primary btn-block bmd-ripple bmd-floating">Add</a>
+  <a data-add-multi="true" class="btn btn-primary btn-block bmd-ripple bmd-floating">Добавить</a>
 </div>
 <script>
 
@@ -91,7 +91,7 @@
   });
 
   $('[data-container="<?php echo $element->getName(); ?>"]').on('click', '[data-delete-row]', function () {
-    $(this).parent('.row').remove();
+    $(this).closest('.row').remove();
 
     let rows = $('[data-container="<?php echo $element->getName(); ?>"] .row');
     rows.each(function (index, row) {

@@ -27,7 +27,7 @@ class Form
   /**
    * @var string
    */
-  public $submit = 'Save';
+  public $submit = 'Сохранить';
 
   /**
    * @var string

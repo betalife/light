@@ -6,6 +6,7 @@ namespace Light;
 
 use Light\Crud\Login;
 use Light\Crud\Storage;
+use Light\Crud\System;
 use Light\Exception\ActionMethodIsReserved;
 use Light\Exception\Stop;
 use ReflectionClass;
@@ -446,6 +447,10 @@ final class Front
       return Storage::class;
     } else if (($this->getConfig()['light']['admin']['auth']['route'] ?? false) == $controller) {
       return Login::class;
+    } else if (($this->getConfig()['light']['admin']['system'] ?? false) == $controller) {
+      return System::class;
+    } else if (($this->getConfig()['light']['admin']['manage'] ?? false) == $controller) {
+      return \Light\Crud\Admin\Controller::class;
     }
 
     if ($this->_config['light']['modules'] ?? false) {
@@ -600,6 +605,10 @@ final class Front
     $statusCode = $response->getStatusCode();
 
     $phpSapiName = substr(php_sapi_name(), 0, 3);
+
+    if ($phpSapiName == 'cli') {
+      return null;
+    }
 
     if ($phpSapiName == 'cgi' || $phpSapiName == 'fpm') {
       header('Status: ' . $statusCode);

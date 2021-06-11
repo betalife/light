@@ -10,7 +10,7 @@ use ArrayAccess;
  * Class Model
  * @package Light
  *
- * @method int remove (array $cond = [], int $limit = null)
+ * @method static int remove (array $cond = [], int $limit = null)
  */
 class Model implements Model\ModelInterface, ArrayAccess
 {

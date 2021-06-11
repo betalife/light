@@ -16,7 +16,19 @@ $(document).ready(function () {
 
       elementContainer.find('input').val(image);
 
-      let template = elementContainer.find('[data-template]').html().split('{{value}}').join(image);
+      const ext = image.split('.')[image.split('.').length - 1];
+
+      let template = '';
+
+      if (ext === 'pdf') {
+        template = elementContainer.find('[data-template-pdf]').html().split('{{value}}').join(image);
+      }
+      else if (ext === 'jpg' || ext === 'jpeg' || ext === 'png') {
+        template = elementContainer.find('[data-template-image]').html().split('{{value}}').join(image);
+      }
+      else {
+        template = elementContainer.find('[data-template-file]').html().split('{{value}}').join(image);
+      }
 
       elementContainer.find('[data-image-container]').html(template);
 
