@@ -42,12 +42,13 @@ abstract class DriverAbstract
   /**
    * @param array|string|null $cond
    * @param array|string|null $sort
+   * @param array|string|null $map
    *
    * @return Model
    */
-  public function fetchObject($cond = null, array $sort = null): Model
+  public function fetchObject($cond = null, array $sort = null, array $map = null): Model
   {
-    $model = static::fetchOne($cond, $sort);
+    $model = static::fetchOne($cond, $sort, $map);
 
     if ($model) {
       return $model;
@@ -59,10 +60,11 @@ abstract class DriverAbstract
   /**
    * @param array|string|null $cond
    * @param array|string|null $sort
+   * @param array|string|null $map
    *
    * @return mixed|null
    */
-  abstract public function fetchOne($cond = null, $sort = null);
+  abstract public function fetchOne($cond = null, $sort = null, $map = null);
 
   /**
    * @return Model
@@ -102,9 +104,17 @@ abstract class DriverAbstract
    * @param int|null $count
    * @param int|null $offset
    *
+   * @param array|string|null $map
+   *
    * @return CursorAbstract
    */
-  abstract public function fetchAll($cond = null, $sort = null, int $count = null, int $offset = null);
+  abstract public function fetchAll(
+    $cond = null,
+    $sort = null,
+    int $count = null,
+    int $offset = null,
+    $map = null
+  );
 
   /**
    * @param array|string|null $cond

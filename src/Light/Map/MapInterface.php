@@ -46,9 +46,9 @@ interface MapInterface
   public function setContext(string $context);
 
   /**
-   * @return array
+   * @return array|string
    */
-  public function common(): array;
+  public function common();
 
   /**
    * @return array

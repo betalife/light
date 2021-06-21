@@ -211,20 +211,39 @@ class Driver extends Model\Driver\DriverAbstract
   }
 
   /**
+   * @param array $map
+   * @return array
+   */
+  private function _getProjection($map): array
+  {
+    $projection = [];
+    if ($map && is_array($map) && count($map)) {
+      foreach ($map as $field) {
+        $projection[$field] = 1;
+      }
+    }
+
+    return $projection;
+  }
+
+  /**
    * @param array|string|null $cond
    * @param array|string|null $sort
+   * @param array|null $map
    *
    * @return Model|null
    */
-  public function fetchOne($cond = null, $sort = null)
+  public function fetchOne($cond = null, $sort = null, $map = null)
   {
     list($cond, $sort) = $this->_processQuery($cond, $sort);
 
     $cond = $this->_normalizeDataTypes($cond);
+    $projection = $this->_getProjection($map);
 
     $query = new Query($cond, [
       'limit' => 1,
-      'sort' => $sort
+      'sort' => $sort,
+      'projection' => $projection
     ]);
 
     $cursor = new Cursor($this->getModel(), $query, $this->getConfig());
@@ -243,18 +262,28 @@ class Driver extends Model\Driver\DriverAbstract
    * @param int|null $count
    * @param int|null $offset
    *
+   * @param array|string|null $map
+   *
    * @return Cursor
    */
-  public function fetchAll($cond = null, $sort = null, int $count = null, int $offset = null)
+  public function fetchAll(
+    $cond = null,
+    $sort = null,
+    int $count = null,
+    int $offset = null,
+    $map = null
+  )
   {
     list($cond, $sort) = $this->_processQuery($cond, $sort);
 
     $cond = $this->_normalizeDataTypes($cond);
+    $projection = $this->_getProjection($map);
 
     $query = new Query($cond, [
       'sort' => $sort,
       'skip' => $offset,
-      'limit' => $count
+      'limit' => $count,
+      'projection' => $projection
     ]);
 
     return new Cursor($this->getModel(), $query, $this->getConfig());

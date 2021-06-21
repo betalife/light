@@ -7,6 +7,7 @@ namespace Light;
 use Exception;
 use Light\Crud\AuthCrud;
 use Light\Form\Generator;
+use Light\Model\ModelInterface;
 use MongoDB\BSON\Regex;
 use ReflectionClass;
 
@@ -27,164 +28,9 @@ abstract class Crud extends AuthCrud
   public $model = null;
 
   /**
-   * Crud constructor.
-   * @throws Exception
-   */
-  public function __construct()
-  {
-    $this->parseDocBlock();
-  }
-
-  /**
-   * @throws Exception
-   */
-  public function parseDocBlock()
-  {
-    try {
-      $reflection = new ReflectionClass(static::class);
-
-      $cruds = array_map(function ($item) {
-        return trim($item);
-      }, array_filter(
-        explode("\n", str_replace('*', ' ', $reflection->getDocComment())),
-        function ($item) {
-          return substr(trim($item), 0, strlen('@crud-')) == '@crud-';
-        }
-      ));
-
-      $header = [];
-      $filter = [];
-
-      foreach ($cruds as $crud) {
-
-        $prop = explode(' ', $crud);
-
-        if ($prop[0] == '@crud-title') {
-          unset($prop[0]);
-          $this->title = $this->title ?? trim(implode(' ', $prop));
-          continue;
-        }
-
-        if ($prop[0] == '@crud-manageable') {
-          $this->button = $this->button ?? trim($prop[1]) == 'true' ? true : false;
-          continue;
-        }
-
-        if ($prop[0] == '@crud-sortable') {
-
-          if (trim($prop[1]) == 'true') {
-            $this->positioning = $this->positioning ?? 'title';
-          } else if (trim($prop[1]) != 'false') {
-            $this->positioning = $this->positioning ?? trim($prop[1]);
-          }
-          continue;
-        }
-
-        if ($prop[0] == '@crud-header') {
-          unset($prop[0]);
-
-          $prop = array_map(function ($item) {
-            return trim(str_replace(['[', ',', ']'], null, $item));
-          }, $prop);
-
-          if ($prop[2] == 'text') {
-            $header[$prop[3]] = [
-              'title' => $prop[1],
-              'static' => $prop[4] ?? "false" == "true"
-            ];
-          } else if ($prop[2] == 'bool') {
-            $header[$prop[3]] = [
-              'title' => $prop[1],
-              'type' => 'bool',
-              'static' => $prop[4] ?? "false" == "true"
-            ];
-          } else if ($prop[2] == 'model') {
-            $header[$prop[3]] = [
-              'type' => 'model',
-              'title' => $prop[1],
-              'field' => $prop[4],
-              'model' => $prop[5],
-              'static' => $prop[6] ?? "false" == "true"
-            ];
-          } else if ($prop[2] == 'dateTime') {
-            $header[$prop[3]] = [
-              'type' => 'datetime',
-              'title' => $prop[1],
-              'static' => $prop[6] ?? "false" == "true"
-            ];
-          } else if ($prop[2] == 'image') {
-            $header[$prop[2]] = [
-              'type' => 'image',
-              'title' => $prop[1],
-              'static' => $prop[3] ?? "false" == "true"
-            ];
-          }
-          continue;
-        }
-
-        if ($prop[0] == '@crud-filter') {
-
-          unset($prop[0]);
-
-          $prop = array_map(function ($item) {
-            return trim(str_replace(['[', ',', ']'], null, $item));
-          }, $prop);
-
-          $type = $prop[1];
-          unset($prop[1]);
-
-          $filterItem = [];
-
-          if ($type == 'search') {
-            $filterItem = ['type' => 'search', 'by' => []];
-
-            foreach ($prop as $item) {
-              $filterItem['by'][] = $item;
-            }
-          } else if ($type == 'model') {
-            $filterItem = ['type' => 'model', 'by' => $prop[2], 'field' => $prop[3], 'model' => $prop['4']];
-          } else if ($type == 'datetime') {
-            $filterItem = ['type' => 'datetime', 'by' => $prop[2]];
-          }
-          $filter[] = $filterItem;
-        }
-      }
-
-      if (!$header) {
-
-        /** @var Model $modelClassName */
-        $modelClassName = $this->getModelClassName();
-
-        if (class_exists($modelClassName)) {
-
-          /** @var Model $model */
-          $model = new $modelClassName;
-
-          if ($model->getMeta()->hasProperty('image')) {
-            $header['image'] = ['title' => 'Рис.', 'type' => 'image', 'static' => true];
-          }
-          if ($model->getMeta()->hasProperty('title')) {
-            $header['title'] = ['title' => 'Заголовок', 'static' => true];
-          }
-          if ($model->getMeta()->hasProperty('enabled')) {
-            $header['enabled'] = ['title' => 'Активность', 'type' => 'bool'];
-          }
-        }
-      }
-
-      $this->header = $this->header ?? $header;
-      $this->filter = $this->filter ?? $filter;
-
-    } catch (Exception $e) {
-      throw $e;
-      throw new Exception('Error parsing crud-line ' . $crud);
-    }
-  }
-
-  /**
    * @return string
    */
-  public function getModelClassName()
+  protected function getModelClassName()
   {
     $controllerClassPars = explode('\\', get_class($this));
 
@@ -200,7 +46,7 @@ abstract class Crud extends AuthCrud
   /**
    * @return string
    */
-  public function getEntity()
+  protected function getEntity()
   {
     $controllerClassPars = explode('\\', get_class($this));
 
@@ -234,7 +80,7 @@ abstract class Crud extends AuthCrud
   /**
    * @return array
    */
-  public function getConditions()
+  protected function getConditions()
   {
     $conditions = [];
 
@@ -253,13 +99,24 @@ abstract class Crud extends AuthCrud
         } else {
           $conditions[$filter['by'][0]] = new Regex(htmlspecialchars(quotemeta($filter['value'])), 'i');
         }
-      } else if ($filter['type'] == 'model') {
 
+      } else if ($filter['type'] == 'bool') {
+
+        if ($filter['value'] == 'true') {
+          $conditions[$filter['by'] ?? 'id'] = true;
+
+        } else if ($filter['value'] == 'false') {
+          $conditions[$filter['by'] ?? 'id'] = false;
+        }
+
+      } else if ($filter['type'] == 'model') {
         $conditions[$filter['by'] ?? 'id'] = $filter['value'];
-      } else if ($filter['type'] == 'datetime') {
+
+      } else if ($filter['type'] == 'dateTime') {
         $conditions[$filter['by']] = ['$gt' => strtotime($filter['value']['from']), '$lt' => strtotime($filter['value']['to'])];
+
       } else {
-        $conditions[$filter['name']] = $filter['value'];
+        $conditions[$filter['by']] = $filter['value'];
       }
     }
 
@@ -269,55 +126,44 @@ abstract class Crud extends AuthCrud
   /**
    * @return array
    */
-  public function getFilterWithValues()
+  protected function getFilterWithValues()
   {
-    $filter = $this->getFilter();
+    $filters = [];
 
-    foreach ($filter as $index => $filterItem) {
+    foreach ($this->getFilter() as $filter) {
 
-      $filter[$index]['name'] = $filterItem['name'] ?? $filterItem['type'];
+      if ($filter['type'] == 'search') {
+        $filter['value'] = $this->getParam('filter', [])[$filter['type']] ?? null;
 
-      $filter[$index]['value'] = $this->getRequest()->getGet('filter')[$filter[$index]['name']] ?? null;
-
-      $controllerClassPars = explode('\\', get_class($this));
-
-      $entity = end($controllerClassPars);
-
-      $model = implode('\\', [
-        Front::getInstance()->getConfig()['light']['loader']['namespace'],
-        'Model',
-        $filter[$index]['type']
-      ]);
-
-      if (class_exists($model, false)) {
-
-        $filter[$index]['type'] = 'model';
-        $cond = [];
-
-        if (!empty($filter[$index]['cond'])) {
-          $cond = array_merge($cond, $filter[$index]['cond']);
-        }
-
-        $filter[$index]['model'] = $model::fetchAll($cond);
+      } else {
+        $filter['value'] = $this->getParam('filter', [])[$filter['by']] ?? null;
       }
+
+      $filters[] = $filter;
     }
 
-    return $filter;
+    return $filters;
   }
 
   /**
    * @return array
    */
-  public function getFilter()
+  protected function getFilter()
   {
-    return $this->filter ?? [];
+    return $this->getCruds('filter');
   }
 
   /**
    * @return array
    */
-  public function getSorting()
+  protected function getSorting()
   {
+    $sorting = $this->getCruds('sorting');
+
+    if (count($sorting)) {
+      return $sorting[0];
+    }
+
     $defaultSort = [];
 
     /** @var Model $modelClassName */
@@ -331,22 +177,22 @@ abstract class Crud extends AuthCrud
       ];
     }
 
-    return array_merge($this->sort ?? $defaultSort, array_filter($this->getRequest()->getGet('sort', $defaultSort)));
+    return array_merge($defaultSort, array_filter($this->getRequest()->getGet('sort', $defaultSort)));
   }
 
   /**
    * @return bool
    */
-  public function getPositioning()
+  protected function getPositioning()
   {
-    return $this->positioning ?? false;
+    return $this->getCruds('sortable');
   }
 
   /**
    * @return array
    * @throws Exception
    */
-  public function setPosition()
+  protected function setPosition()
   {
     $this->getView()->setLayoutEnabled(false);
 
@@ -376,7 +222,7 @@ abstract class Crud extends AuthCrud
   /**
    * @throws Exception
    */
-  public function copy()
+  protected function copy()
   {
     $this->getView()->setLayoutEnabled(false);
 
@@ -420,18 +266,21 @@ abstract class Crud extends AuthCrud
    */
   public function index()
   {
-    $this->getView()->setVars([
+    $this->adminLog(\Light\Crud\AdminHistory\Model::TYPE_READ_TABLE);
 
+    $this->getView()->setVars([
+      'icon' => $this->getAdminMenuItem()['icon'] ?? null,
       'title' => $this->getTitle(),
       'button' => $this->getButton(),
       'positioning' => $this->getPositioning(),
       'positioningWithoutLanguage' => $this->positioningWithoutLanguage ?? false,
       'positioningCustom' => $this->positioningCustom ?? false,
-      'export' => $this->export ?? false,
+      'export' => $this->getExportHeader() ?? false,
 
       'language' => $this->getRequest()->getGet('filter')['language'] ?? false,
       'filter' => $this->getFilterWithValues(),
       'header' => $this->getHeader(),
+      'headerButtons' => $this->getHeaderButtons(),
       'controls' => $this->getControls(),
       'paginator' => $this->getPaginator(),
       'controller' => $this->getRouter()->getController(),
@@ -443,35 +292,70 @@ abstract class Crud extends AuthCrud
   /**
    * @return string
    */
-  public function getTitle()
+  protected function getTitle()
   {
-    return $this->title ?? false;
+    return $this->getCruds('title');
   }
 
   /**
    * @return string
    */
-  public function getButton()
+  protected function getButton(): bool
   {
-    return $this->button ?? false;
+    return (bool)$this->getCruds('manageable');
   }
 
   /**
    * @return array
    */
-  public function getHeader()
+  protected function getHeaderButtons(): array
   {
-    return $this->header ?? [];
+    return $this->getCruds('header-button');
   }
 
   /**
    * @return array
    */
-  public function getControls(): array
+  protected function getHeader()
   {
-    $controls = $this->controls ?? [
-        ['type' => 'edit']
-      ];
+    $headers = [];
+
+    foreach ($this->getCruds('header') as $header) {
+      $headers[$header['by']] = $header;
+    }
+
+    if (!count($headers)) {
+
+      /** @var Model $modelClassName */
+      $modelClassName = $this->getModelClassName();
+
+      if (class_exists($modelClassName)) {
+
+        /** @var Model $model */
+        $model = new $modelClassName;
+
+        if ($model->getMeta()->hasProperty('image')) {
+          $headers['image'] = ['title' => 'Рис.', 'type' => 'image', 'static' => true];
+        }
+        if ($model->getMeta()->hasProperty('title')) {
+          $headers['title'] = ['title' => 'Заголовок', 'static' => true];
+        }
+        if ($model->getMeta()->hasProperty('enabled')) {
+          $headers['enabled'] = ['title' => 'Активность', 'type' => 'bool'];
+        }
+      }
+    }
+    return $headers;
+  }
+
+  /**
+   * @return array
+   */
+  protected function getControls(): array
+  {
+    $controls = $this->getCruds('controls') ?? [];
+
+    $controls[] = ['type' => 'edit'];
 
     $modelClassName = $this->getModelClassName();
 
@@ -488,7 +372,7 @@ abstract class Crud extends AuthCrud
   /**
    * @return Paginator
    */
-  public function getPaginator()
+  protected function getPaginator()
   {
     /** @var Model $modelClassName */
     $modelClassName = $this->getModelClassName();
@@ -517,7 +401,7 @@ abstract class Crud extends AuthCrud
   /**
    * @return int
    */
-  public function getItemsPerPage()
+  protected function getItemsPerPage()
   {
     return 30;
   }
@@ -549,11 +433,15 @@ abstract class Crud extends AuthCrud
    */
   public function export()
   {
+    ini_set('memory_limit', '-1');
+
+    set_time_limit(0);
+
     $this->getView()->setLayoutEnabled(false);
 
     $response = [];
 
-    $response[] = implode(',', array_keys($this->getExportHeader()));
+    $response[] = '"' . implode('","', array_keys($this->getExportHeader())) . '"';
 
     /** @var Model $modelClassName */
     $modelClassName = $this->getModelClassName();
@@ -564,67 +452,51 @@ abstract class Crud extends AuthCrud
     );
 
     foreach ($table as $row) {
-
       $cols = [];
-
-      foreach ($this->getExportHeader() as $name => $struct) {
-
-        $cols[] = $this->exportType($row->{$name}, $struct['type'] ?? 'text');
+      foreach ($this->getExportHeader() as $name => $field) {
+        if (is_string($field)) {
+          $cols[] = $row->{$field};
+        } else {
+          $cols[] = $field($row);
+        }
       }
-
-      $response[] = implode(',', $cols);
+      $response[] = '"' . implode('","', $cols) . '"';
     }
+
+    $response = implode(";\n", $response) . ';';
 
     $fileName = $this->getExportFileName() . '_' . date('c') . '.csv';
     $this->getResponse()->setHeader('Content-Disposition', 'attachment;filename=' . $fileName);
+    $this->getResponse()->setHeader('Content-Size', (string)mb_strlen($response));
 
-    return implode(";\n", $response) . ';';
+    return $response;
   }
 
   /**
    * @return array
+   * @throws Exception
    */
-  public function getExportHeader()
+  protected function getExportHeader(): array
   {
-    return $this->exportHeader ?? $this->header ?? [];
-  }
-
-  /**
-   * @param mixed $value
-   * @param string $type
-   * @return false|string|null
-   */
-  public function exportType($value, $type)
-  {
-    switch ($type) {
-
-      case 'text':
-        return $value;
-
-      case 'bool':
-        return (bool)$value ? 'Да' : 'Нет';
-
-      case 'date':
-        return date('Y/m/d H:i:s', $value);
-    }
-
-    return null;
+    return $this->getCruds('export')[0] ?? [];
   }
 
   /**
    * @return string
    */
-  public function getExportFileName()
+  protected function getExportFileName()
   {
-    return $this->export ?? 'export';
+    $controllerClassPars = explode('\\', get_class($this));
+    return end($controllerClassPars);
   }
 
   /**
+   * @param string|null $id
    * @throws Exception\DomainMustBeProvided
    * @throws Exception\RouterVarMustBeProvided
    * @throws Exception\ValidatorClassWasNotFound
    */
-  public function manage()
+  public function manage(string $id = null)
   {
     /** @var Model $modelClassName */
     $modelClassName = $this->getModelClassName();
@@ -642,42 +514,43 @@ abstract class Crud extends AuthCrud
 
         $formData = $form->getValues();
 
-        if (!(bool)$model->id && $model->getMeta()->hasProperty('language')) {
+        $this->adminLog(
+          $model->id
+            ? \Light\Crud\AdminHistory\Model::TYPE_WRITE_ENTITY
+            : \Light\Crud\AdminHistory\Model::TYPE_CREATE_ENTITY,
+          Map::execute($model->toArray(), array_combine(
+            array_keys($this->getHeader()),
+            array_keys($this->getHeader()),
+          )),
+          null,
+          $model->toArray(),
+          $formData
+        );
 
-          $languageModelClassName = implode('\\', [
-            Front::getInstance()->getConfig()['light']['loader']['namespace'],
-            'Model',
-            'Language'
-          ]);
+        $model->populate($formData);
+        $isCreating = !!$model->id;
+        $model->save();
 
-          foreach ($languageModelClassName::fetchAll() as $language) {
-
-            /** @var Model $languageRelatedModel */
-            $languageRelatedModel = new $modelClassName();
-
-            $languageRelatedModel->populate($formData);
-            $languageRelatedModel->language = $language;
-
-            if ($formData['language']->id != $language->id
-              && $model->getMeta()->hasProperty('language')
-              && $model->getMeta()->hasProperty('enabled')) {
-              $languageRelatedModel->enabled = false;
-            }
-
-            $languageRelatedModel->save();
-
-            $this->didSave($languageRelatedModel);
-          }
+        if ($isCreating) {
+          $this->didChanged($model, $formData);
         } else {
-
-          $model->populate($formData);
-          $model->save();
-
-          $this->didSave($model);
+          $this->didCreated($model, $formData);
         }
+
+        $this->didSaved($model, $formData);
 
         die('ok:' . $this->getRequest()->getPost('return-url'));
       }
+    }
+
+    if ($model->id) {
+      $this->adminLog(
+        \Light\Crud\AdminHistory\Model::TYPE_READ_ENTITY,
+        Map::execute($model->toArray(), array_combine(
+          array_keys($this->getHeader()),
+          array_keys($this->getHeader()),
+        ))
+      );
     }
 
     $form->setReturnUrl(
@@ -699,7 +572,7 @@ abstract class Crud extends AuthCrud
    * @param mixed|null $model
    * @return Form|null
    */
-  public function getForm($model = null)
+  protected function getForm($model = null)
   {
     /** @var Form $formClassName */
     $formClassName = $this->getFormClassName();
@@ -720,7 +593,7 @@ abstract class Crud extends AuthCrud
   /**
    * @return string
    */
-  public function getFormClassName()
+  protected function getFormClassName()
   {
     $controllerClassPars = explode('\\', get_class($this));
 
@@ -730,9 +603,26 @@ abstract class Crud extends AuthCrud
   }
 
   /**
-   * @param Model $model
+   * @param ModelInterface $model
+   * @param array $formData
    */
-  public function didSave($model)
+  protected function didCreated(ModelInterface $model, array $formData)
+  {
+  }
+
+  /**
+   * @param ModelInterface $model
+   * @param array $formData
+   */
+  protected function didChanged(ModelInterface $model, array $formData)
+  {
+  }
+
+  /**
+   * @param ModelInterface $model
+   * @param array $formData
+   */
+  protected function didSaved(ModelInterface $model, array $formData)
   {
   }
 
@@ -769,5 +659,107 @@ abstract class Crud extends AuthCrud
     $this->getView()->setAutoRender(true);
 
     $this->getView()->setPath(__DIR__ . '/Crud');
+  }
+
+  /**
+   * @param string $type
+   * @param array $entity
+   * @param string|null $section
+   * @param array $was
+   * @param array $became
+   */
+  protected function adminLog(string $type, array $entity = [], string $section = null, array $was = [], array $became = []): void
+  {
+    if (Front::getInstance()->getConfig()['light']['admin']['history'] ?? false) {
+
+      if ($this instanceof \Light\Crud\AdminHistory\Controller) {
+        return;
+      }
+
+      $section = $section ?? $this->title ?? null;
+      if (!$section) {
+
+        $controllerClassPars = explode('\\', get_class($this));
+        $section = strtolower(end($controllerClassPars));
+
+        foreach (Front::getInstance()->getConfig()['light']['admin']['menu'] ?? [] as $menu) {
+          foreach ($menu['items'] as $subMenu) {
+            if (isset($subMenu['url'])) {
+              if (strtolower($subMenu['url']['controller']) == $section) {
+                $section = $subMenu['title'];
+              }
+            }
+          }
+        }
+      }
+
+      $history = new \Light\Crud\AdminHistory\Model();
+      $data = [
+        'dateTime' => time(),
+        'admin' => Auth::getInstance()->get(),
+        'type' => $type,
+        'section' => $section,
+        'entity' => $entity,
+        'was' => $was,
+        'became' => $became
+      ];
+      $data['search'] = serialize($data);
+      $history->populate($data);
+      $history->save();
+    }
+  }
+
+  /**
+   * @return mixed|null
+   */
+  protected function getAdminMenuItem()
+  {
+    $controllerClassPars = explode('\\', get_class($this));
+    $section = strtolower(end($controllerClassPars));
+
+    foreach (Front::getInstance()->getConfig()['light']['admin']['menu'] ?? [] as $menu) {
+      foreach ($menu['items'] as $subMenu) {
+        if (strtolower($subMenu['url']['controller'] ?? '') == $section) {
+          return $subMenu;
+        }
+      }
+    }
+    return null;
+  }
+
+  /**
+   * @param string $type
+   * @return array|string
+   */
+  protected function getCruds(string $type)
+  {
+    $reflection = new ReflectionClass(static::class);
+
+    $cruds = array_values(array_map(function ($item) use ($type) {
+      return trim(str_replace('@crud-' . $type . " ", '', $item));
+    }, array_filter(
+      explode("\n", str_replace('*', ' ', $reflection->getDocComment())),
+      function ($item) use ($type) {
+        return strstr($item, '@crud-' . $type . " ");
+      }
+    )));
+
+    if ($type == 'title') {
+      return $cruds[0];
+    }
+
+    if ($type == 'sortable') {
+      return $cruds[0] ?? false;
+    }
+
+    foreach ($cruds as $index => $crud) {
+      if ($crud = json_decode($crud, true)) {
+        $cruds[$index] = $crud;
+        continue;
+      }
+      throw new Exception("Crud with type: {$type} have not a valid JSON: {$crud}");
+    }
+
+    return $cruds;
   }
 }

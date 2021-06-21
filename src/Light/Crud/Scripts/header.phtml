@@ -3,11 +3,28 @@
     <div class="row">
       <div class="col-xs-6">
         <?php if ($this->title) : ?>
-          <p class="lead"><?php echo $this->title; ?></p>
+          <p class="lead text-primary">
+            <?php if ($this->icon) : ?>
+              <i style="margin-right: 10px" class="fa fa-<?php echo $this->icon; ?>"></i>
+            <?php endif; ?>
+            <?php echo $this->title; ?>
+          </p>
         <?php endif; ?>
       </div>
 
       <div class="col-xs-6 text-right">
+
+        <?php if (count($this->filter ?? [])) : ?>
+          <a href="?"
+             class="btn btn-danger bmd-ripple bmd-fab bmd-floating bmd-fab-sm reset-filters"
+             data-bmd-state="danger"
+             data-toggle="tooltip"
+             data-placement="bottom"
+             data-original-title="Сбросить фильтры">
+            <span class="fa fa-filter"></span>
+          </a>
+        <?php endif; ?>
+
         <?php if ($this->done) : ?>
           <a href="<?php echo $this->uri(['action' => 'index']); ?>"
              class="btn btn-primary bmd-ripple bmd-fab bmd-floating bmd-fab-sm"
@@ -58,13 +75,34 @@
           <?php endif; ?>
         <?php endif; ?>
 
-        <?php if ($this->export) : ?>
+        <?php if (count($this->export ?? [])) : ?>
           <a data-force="true"
              href="<?php echo $this->uri(['action' => 'export']) . '?' . \Light\Front::getInstance()->getRouter()->getRequest()->getUriParams(); ?>"
-             class="btn btn-default bmd-ripple bmd-fab bmd-floating bmd-fab-sm">
+             class="btn btn-default bmd-ripple bmd-fab bmd-floating bmd-fab-sm"
+             data-bmd-state="default"
+             data-toggle="tooltip"
+             data-placement="bottom"
+             data-original-title="Экспорт">
             <span class="fa fa-download"></span>
           </a>
         <?php endif; ?>
+
+        <?php foreach ($this->headerButtons ?? [] as $headerButton) : ?>
+
+          <?php if ($headerButton['confirm'] ?? false) : ?>
+            <a onclick="modal.confirm('<?php echo $headerButton['confirm']; ?>', () => NAV.nav('<?php echo $this->uri($headerButton['url']); ?>'))"
+          <?php else: ?>
+            <a href="<?php echo $this->uri($headerButton['url'], $headerButton['params'] ?? []); ?>"
+          <?php endif; ?>
+             class="btn btn-<?php echo $headerButton['style']['color'] ?? 'primary'; ?> bmd-ripple bmd-fab bmd-floating bmd-fab-sm"
+             data-bmd-state="<?php echo $headerButton['style']['color'] ?? 'primary'; ?>"
+             data-toggle="tooltip"
+             data-placement="bottom"
+             data-original-title="<?php echo $headerButton['title']; ?>">
+            <span class="bmd-icon flaticon-<?php echo $headerButton['style']['icon']; ?>"></span>
+          </a>
+        <?php endforeach; ?>
+
       </div>
     </div>
   </div>

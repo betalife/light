@@ -25,7 +25,7 @@ window.modal = {
 
     modal._hideModalIfItsOpenedAndOpenNew(template, closeCallback, options);
 
-    $(document).on('click', modal.selector + ' ' + '[data-modal-confirm]', () => {
+    $(document).find(modal.selector + ' ' + '[data-modal-confirm]').off('click').on('click', () => {
 
       modal.hide();
 

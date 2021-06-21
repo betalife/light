@@ -15,9 +15,9 @@ use Light\Form\Generator;
  * @crud-title Администраторы
  * @crud-manageable true
  *
- * @crud-header Имя [text, name, true]
- * @crud-header Логин [text, login, true]
- * @crud-header Активность [bool, enabled, true]
+ * @crud-header {"title": "Имя", "by": "name", "static": true}
+ * @crud-header {"title": "Логин", "by": "login"}
+ * @crud-header {"title": "Активность", "type": "bool", "by": "enabled", "static": true}
  */
 class Controller extends Crud
 {
@@ -55,10 +55,11 @@ class Controller extends Crud
   }
 
   /**
+   * @param string|null $id
    * @throws \Light\Exception\DomainMustBeProvided
    * @throws \Light\Exception\RouterVarMustBeProvided
    */
-  public function manage()
+  public function manage(string $id = null)
   {
     $model = Model::fetchObject([
       'id' => $this->getRequest()->getParam('id')
@@ -77,8 +78,6 @@ class Controller extends Crud
         } else {
           unset($formData['password']);
         }
-
-        // var_dump($formData); die();
 
         $model->populate($formData);
         $model->save();

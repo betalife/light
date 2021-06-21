@@ -33,39 +33,33 @@ abstract class CrudSingle extends Crud
 
         $formData = $form->getValues();
 
-        if (!(bool)$model->id && $model->getMeta()->hasProperty('language')) {
+        $this->adminLog(
+          $model->id
+            ? \Light\Crud\AdminHistory\Model::TYPE_WRITE_ENTITY
+            : \Light\Crud\AdminHistory\Model::TYPE_CREATE_ENTITY,
+          Map::execute($model->toArray(), array_combine(
+            array_keys($this->getHeader()),
+            array_keys($this->getHeader()),
+          )),
+          null,
+          $model->toArray(),
+          $formData
+        );
 
-          $languageModelClassName = implode('\\', [
-            Front::getInstance()->getConfig()['light']['loader']['namespace'],
-            'Model',
-            'Language'
-          ]);
+        $model->populate($formData);
+        $model->save();
 
-          foreach ($languageModelClassName::fetchAll() as $language) {
-
-            /** @var Model $languageRelatedModel */
-            $languageRelatedModel = new $modelClassName();
-
-            $languageRelatedModel->populate($formData);
-            $languageRelatedModel->language = $language;
-
-            if ($formData['language'] != $language->id && $model->getMeta()->hasProperty('language')) {
-              $languageRelatedModel->enabled = false;
-            }
-
-            $languageRelatedModel->save();
-
-            $this->didSave($languageRelatedModel);
-          }
-        } else {
-
-          $model->populate($formData);
-          $model->save();
-
-          $this->didSave($model);
-        }
+        $this->didSave($model);
       }
     }
+
+    $this->adminLog(
+      \Light\Crud\AdminHistory\Model::TYPE_READ_ENTITY,
+      Map::execute($model->toArray(), array_combine(
+        array_keys($this->getHeader()),
+        array_keys($this->getHeader()),
+      ))
+    );
 
     $form->setReturnUrl(
       $this->getRouter()->assemble([

@@ -17,6 +17,8 @@ class System extends Crud
    */
   public function index()
   {
+    $this->adminLog(\Light\Crud\AdminHistory\Model::TYPE_READ_ENTITY, [], 'Мониторинг');
+
     try {
       $this->getView()->setVars([
         'disk' => \Light\System::disk(),

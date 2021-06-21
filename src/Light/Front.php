@@ -206,12 +206,12 @@ final class Front
   }
 
   /**
-   * @param \Exception|null $exception
+   * @param \Exception|\Error $exception
    * @return string
    *
    * @throws \Exception
    */
-  public function run(\Exception $exception = null)
+  public function run($exception = null)
   {
     if (!$this->_request) {
 
@@ -369,7 +369,7 @@ final class Front
 
         $content = call_user_func_array(
           [$controller, $this->_router->getAction()],
-          $this->inject($controller, $this->_router)
+          $this->inject($controller, $this->_router, $this->_request)
         );
 
         $needLayout = true;
@@ -407,7 +407,7 @@ final class Front
       }
 
       return $this->render($this->_response);
-    } catch (\Exception $localException) {
+    } catch (\Throwable $localException) {
 
       if ($localException instanceof Stop) {
         return $this->render($this->_response);
@@ -445,12 +445,18 @@ final class Front
 
     if (($this->getConfig()['light']['storage']['route'] ?? false) == $controller) {
       return Storage::class;
+
     } else if (($this->getConfig()['light']['admin']['auth']['route'] ?? false) == $controller) {
       return Login::class;
+
     } else if (($this->getConfig()['light']['admin']['system'] ?? false) == $controller) {
       return System::class;
+
     } else if (($this->getConfig()['light']['admin']['manage'] ?? false) == $controller) {
       return \Light\Crud\Admin\Controller::class;
+
+    } else if (($this->getConfig()['light']['admin']['history'] ?? false) == $controller) {
+      return \Light\Crud\AdminHistory\Controller::class;
     }
 
     if ($this->_config['light']['modules'] ?? false) {
@@ -488,11 +494,12 @@ final class Front
   /**
    * @param Controller $controller
    * @param Router $router
+   * @param Request $request
    *
    * @return array
    * @throws ReflectionException
    */
-  public function inject(Controller $controller, Router $router)
+  public function inject(Controller $controller, Router $router, Request $request)
   {
     $reflection = new ReflectionMethod($controller, $router->getAction());
     $injector = $router->getInjector();
@@ -533,7 +540,7 @@ final class Front
         $args[$var] = $injector[$var]($router->getUrlParams()[$var] ?? null);
       } else {
 
-        $value = $router->getUrlParams()[$var] ?? null;
+        $value = $router->getUrlParams()[$var] ?? $request->getParam($var);
 
         if (!$parameter->getType()) {
           $args[$var] = $value;

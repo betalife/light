@@ -11,7 +11,7 @@ use Light\Model\ModelInterface;
  * Class Map
  * @package Light
  *
- * @method static array|Map execute(array|ModelInterface $data, string|array $context = null, array $userData = [])
+ * @method static array|Map execute(array|ModelInterface $data, string|array $context = null, array $userData = [], array $include = [])
  */
 class Map implements Map\MapInterface, Iterator
 {
@@ -19,22 +19,31 @@ class Map implements Map\MapInterface, Iterator
    * @var array
    */
   public $_commonData = [];
+
   /**
    * @var array|object|Model
    */
   private $_data = [];
+
   /**
    * @var array
    */
   private $_userData = [];
+
   /**
    * @var int
    */
   private $_index = 0;
+
   /**
    * @var string
    */
   private $_context = null;
+
+  /**
+   * @var array
+   */
+  private $_include = [];
 
   /**
    * @param string $name
@@ -56,10 +65,10 @@ class Map implements Map\MapInterface, Iterator
       }
 
       if (is_array($arguments[1])) {
-        return self::executeArray($arguments[0], $arguments[1], $arguments[2] ?? []);
+        return self::executeArray($arguments[0], $arguments[1], $arguments[2] ?? [], $arguments[3] ?? []);
       }
 
-      return self::executeMap($arguments[0], $arguments[1] ?? [], $arguments[2] ?? []);
+      return self::executeMap($arguments[0], $arguments[1] ?? [], $arguments[2] ?? [], $arguments[3] ?? []);
     }
 
     throw new Exception([], 'Method ' . $name . ' not implemented', 500);
@@ -67,11 +76,13 @@ class Map implements Map\MapInterface, Iterator
 
   /**
    * @param array|Model\ModelInterface $data
-   * @param string $context
+   * @param array $context
+   * @param array $userData
+   * @param array $include
    *
    * @return array
    */
-  public static function executeArray($data, array $context = [], array $userData = [])
+  public static function executeArray($data, array $context = [], array $userData = [], array $include = [])
   {
     $map = new self();
 
@@ -113,13 +124,15 @@ class Map implements Map\MapInterface, Iterator
 
     foreach ($contextMap as $name => $value) {
 
-      if ($this->_isSingleData()) {
+      if (count($this->getInclude()) && !in_array($name, $this->getInclude())) {
+        continue;
+      }
 
+      if ($this->_isSingleData()) {
         $transformedDataRow[$name] = $this->_transform($this->getData(), $value);
       } else {
         $transformedDataRow[$name] = $this->_transform($this->_getDataRow($this->_index), $value);
       }
-
     }
 
     return $transformedDataRow;
@@ -148,6 +161,22 @@ class Map implements Map\MapInterface, Iterator
   public function setContext(string $context)
   {
     $this->_context = $context;
+  }
+
+  /**
+   * @return array
+   */
+  public function getInclude(): array
+  {
+    return $this->_include;
+  }
+
+  /**
+   * @param array $include
+   */
+  public function setInclude(array $include): void
+  {
+    $this->_include = $include;
   }
 
   /**
@@ -233,12 +262,17 @@ class Map implements Map\MapInterface, Iterator
    * @param array|Model\ModelInterface $data
    * @param string $context
    * @param array $userData
+   * @param array $include
    *
    * @return Map
-   *
    * @throws Map\Exception\MapContextWasNotFound
    */
-  public static function executeMap($data, string $context = 'common', array $userData = []): Map
+  public static function executeMap(
+    $data,
+    string $context = 'common',
+    array $userData = [],
+    array $include = []
+  ): Map
   {
     $mapClassName = static::class;
 
@@ -251,6 +285,7 @@ class Map implements Map\MapInterface, Iterator
       $map->setData($data);
       $map->setUserData($userData);
       $map->setContext($context);
+      $map->setInclude($include);
 
       return $map;
     }

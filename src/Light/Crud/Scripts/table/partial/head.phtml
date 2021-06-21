@@ -24,6 +24,8 @@
     <?php $index++; ?>
 
   <?php endforeach; ?>
-  <th class="text-right" style="width: 10px;"></th>
+  <?php if (count($this->controls)) : ?>
+    <th class="text-right" style="width: 10px;"></th>
+  <?php endif; ?>
 </tr>
 </thead>

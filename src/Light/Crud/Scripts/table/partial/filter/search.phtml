@@ -4,12 +4,12 @@
       <i class="fa fa-search"></i>
     </span>
     <div class="bmd-field-group">
-      <input name="filter[<?php echo $this->filter['name']; ?>]"
+      <input name="filter[search]"
              type="text"
              class="bmd-input"
              value="<?php echo $this->filter['value']; ?>"/>
       <span class="bmd-bar"></span>
-      <label class="bmd-label">Поиск...</label>
+      <label class="bmd-label <?php if (!strlen($this->filter['value'])) : ?>down<?php endif; ?>">Поиск...</label>
     </div>
   </div>
 </div>
@@ -18,9 +18,15 @@
   window.addEventListener("keydown", e => {
     if (e.keyCode === 114 || (e.ctrlKey && e.keyCode === 70)) {
       e.preventDefault();
-      $('[name="filter[<?php echo $this->filter['name']; ?>]"]')
+      $('[name="filter[search]"]')
         .focus()
         .select();
+    }
+  });
+
+  $('[name="filter[search]"]').on('keydown', e => {
+    if (e.keyCode === 13) {
+      $('[data-form-table]').submit();
     }
   });
 </script>

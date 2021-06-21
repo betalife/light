@@ -10,12 +10,12 @@ use Light\Crud;
  *
  * @crud-title {name}
  * @crud-manageable true
- * @crud-sortable true
+ * @crud-sortable title
  *
- * @crud-header Заголовок [text, title, true]
- * @crud-header Активность [bool, enabled, true]
+ * @crud-header {"title": "Заголовок", "by": "title", "static": true}
+ * @crud-header {"title": "Активность", "type": "bool", "by": "enabled", "static": true}
  *
- * @crud-filter search [title]
+ * @crud-filter {"type": "search", "by": ["title"]}
  */
 class {name} extends Crud
 {

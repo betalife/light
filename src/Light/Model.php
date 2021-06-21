@@ -137,21 +137,23 @@ class Model implements Model\ModelInterface, ArrayAccess
   /**
    * @param array $cond
    * @param array $sort
+   * @param array $map
    *
    * @return Model|null|static
    */
-  public static function one(array $cond = [], array $sort = [])
+  public static function one(array $cond = [], array $sort = [], array $map = [])
   {
-    return static::fetchOne(self::addCond($cond), self::addPosition($sort));
+    return static::fetchOne(self::addCond($cond), self::addPosition($sort), $map);
   }
 
   /**
    * @param array|string|null $cond
    * @param array|string|null $sort
+   * @param array|string|null $map
    *
    * @return null|Model|static
    */
-  public static function fetchOne($cond = null, $sort = null)
+  public static function fetchOne($cond = null, $sort = null, $map = null)
   {
     return self::__callStatic(__FUNCTION__, func_get_args());
   }
@@ -189,14 +191,23 @@ class Model implements Model\ModelInterface, ArrayAccess
   /**
    * @param array $cond
    * @param array $sort
+   *
    * @param int|null $count
    * @param int|null $offset
    *
+   * @param array $map
+   *
    * @return array|Model|static[]
    */
-  public static function all(array $cond = [], array $sort = [], int $count = null, int $offset = null)
+  public static function all(
+    array $cond = [],
+    array $sort = [],
+    int $count = null,
+    int $offset = null,
+    array $map = []
+  )
   {
-    return static::fetchAll(self::addCond($cond), self::addPosition($sort), $count, $offset);
+    return static::fetchAll(self::addCond($cond), self::addPosition($sort), $count, $offset, $map);
   }
 
   /**
@@ -206,9 +217,17 @@ class Model implements Model\ModelInterface, ArrayAccess
    * @param int|null $count
    * @param int|null $offset
    *
+   * @param array|null $map
+   *
    * @return array|Model|Model[]|static[]
    */
-  public static function fetchAll($cond = null, $sort = null, int $count = null, int $offset = null)
+  public static function fetchAll(
+    $cond = null,
+    $sort = null,
+    int $count = null,
+    int $offset = null,
+    $map = null
+  )
   {
     return self::__callStatic(__FUNCTION__, func_get_args());
   }

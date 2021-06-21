@@ -29,7 +29,7 @@ class Login extends Controller
       $login = (new Trim())->filter($this->getRequest()->getPost('login'));
       $password = (new Trim())->filter($this->getRequest()->getPost('password'));
 
-      $config = Front::getInstance()->getConfig()['light']['admin']['auth'];
+      $config = Front::getInstance()->getConfig()['light']['admin']['auth']['root'];
 
       if ($config['login'] ?? false == $login && $config['password'] ?? false == $password) {
         Auth::getInstance()->set($config);
@@ -50,6 +50,7 @@ class Login extends Controller
 
           Auth::getInstance()->set($config);
           $this->redirect($this->getRouter()->assemble(['controller' => 'index']));
+
         }
       }
 

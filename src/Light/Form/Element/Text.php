@@ -14,4 +14,18 @@ class Text extends ElementAbstract
    * @var string
    */
   public $elementTemplate = 'element/text';
+
+  /**
+   * @return string
+   */
+  public function getValue(): string
+  {
+    $value = parent::getValue();
+
+    if ($value === null) {
+      return '';
+    }
+
+    return $value;
+  }
 }

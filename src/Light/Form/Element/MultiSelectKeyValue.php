@@ -56,4 +56,18 @@ class MultiSelectKeyValue extends ElementAbstract
   {
     $this->valueLabel = $valueLabel;
   }
+
+  /**
+   * @return array|bool|int|object|string|null
+   */
+  public function getValue()
+  {
+    $value = parent::getValue();
+
+    if ($value === null) {
+      return [];
+    }
+
+    return $value;
+  }
 }

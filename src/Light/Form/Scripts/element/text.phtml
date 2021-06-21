@@ -8,5 +8,5 @@
        name="<?php echo $element->getName(); ?>"
        value="<?php echo htmlspecialchars($element->getValue()); ?>"/>
 
-<label class="bmd-label"><?php echo $element->getLabel() ?? $element->getName(); ?></label>
+<label class="bmd-label <?php if (!strlen($element->getValue())) : ?>down<?php endif; ?>"><?php echo $element->getLabel() ?? $element->getName(); ?></label>
 <span class="bmd-bar"></span>

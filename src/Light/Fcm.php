@@ -2,6 +2,10 @@
 
 namespace Light;
 
+/**
+ * Class Fcm
+ * @package Light
+ */
 class Fcm
 {
   /**
@@ -71,7 +75,7 @@ class Fcm
   }
 
   /**
-   * @return array
+   * @return bool|string
    */
   public function send()
   {
@@ -87,23 +91,22 @@ class Fcm
       'Authorization: key=' . $this->getApiKey(),
     ]);
 
-    $notificaton = [];
-
-    if ($icon = $this->getIcon()) {
-      $notificaton['icon'] = $icon;
-    }
-
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
       'registration_ids' => $this->getTokens(),
-      'notification' => array_merge($notificaton, [
+      'notification' => [
         'title' => $this->getTitle(),
         'body' => $this->getBody(),
-        'click_action' => $this->getClickAction(),
-      ])
+        'sound' => 'default',
+      ],
+      'data' => [
+        'link' => [
+          'type' => $this->payload_type ?? 'home',
+          'data' => $this->payload_data ?? []
+        ]
+      ]
     ]));
 
     $response = curl_exec($ch);
-
     curl_close($ch);
 
     return json_decode($response, true);

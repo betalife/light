@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Light;
 
+use Light\Exception\ViewTemplateWasNotFound;
+
 /**
  * Class View
  * @package Light
@@ -244,8 +246,16 @@ class View
     }
 
     try {
+
+      $_template = $this->_path . '/Scripts/' . ($template ?? $this->_script) . '.phtml';
+      
+      if (!file_exists($_template)) {
+        throw new ViewTemplateWasNotFound($_template);
+      }
+
       $content = $this->_render($this->_path . '/Scripts/' . ($template ?? $this->_script) . '.phtml');
-    } catch (\Exception $e) {
+
+    } catch (ViewTemplateWasNotFound $e) {
 
       $config = Front::getInstance()->getConfig();
 
@@ -259,6 +269,7 @@ class View
           ucfirst(Front::getInstance()->getRouter()->getModule()),
           'View'
         ]));
+
       } else {
 
         $viewPath = realpath(implode('/', [
@@ -270,7 +281,7 @@ class View
       try {
         $content = $this->_render($viewPath . '/' . ($template ?? $this->_script) . '.phtml');
       } catch (\Exception $_e) {
-        throw $e;
+        throw $_e;
       }
     }
 

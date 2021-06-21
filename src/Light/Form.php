@@ -133,15 +133,11 @@ class Form
   public function getValues(): array
   {
     $values = [];
-
     foreach ($this->getElements() as $name => $element) {
-
       if (get_class($element) != 'Light\Form\Element\Separator') {
-
         $values[$name] = $element->getValue();
       }
     }
-
     return $values;
   }
 

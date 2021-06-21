@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Light;
 
 use Light\Filter\FilterAbstract;
+use Light\Request\File;
 
 /**
  * Class Request
@@ -19,6 +20,11 @@ class Request
   const METHOD_POST = 'post';
   const METHOD_PUT = 'put';
   const METHOD_DELETE = 'delete';
+
+  /**
+   * @var File[]
+   */
+  private $_files = [];
 
   /**
    * @var array
@@ -106,14 +112,12 @@ class Request
    */
   public function fillRequestFromServer()
   {
-    $this->_getParams = $_GET;
-    $this->_postParams = $_POST;
-    $this->_params = $_REQUEST;
+    $this->_getParams = array_filter($_GET);
+    $this->_postParams = array_filter($_POST);
+    $this->_params = array_filter($_REQUEST);
 
-    foreach ($_SERVER as $key => $value) {
-      if (substr($key, 0, 5) == 'HTTP_') {
-        $this->_headers[str_replace('_', '-', strtolower(substr($key, 5)))] = $value;
-      }
+    foreach (getallheaders() as $key => $value) {
+      $this->_headers[strtolower($key)] = $value;
     }
 
     $this->_method = strtolower($_SERVER['REQUEST_METHOD']);
@@ -129,6 +133,33 @@ class Request
     if (!empty($_SERVER['HTTP_X_REQUESTED_WITH'])
       && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
       $this->_isAjax = true;
+    }
+
+    foreach ($_FILES as $key => $file) {
+      if (is_array($file['tmp_name'])) {
+        $this->_files[$key] = array_map(function ($name, $type, $tmpName, $error, $size) {
+          return new File([
+            'name' => $name,
+            'type' => $type,
+            'tmpName' => $tmpName,
+            'error' => $error,
+            'size' => $size
+          ]);
+        }, $_FILES[$key]['name'],
+          $_FILES[$key]['type'],
+          $_FILES[$key]['tmp_name'],
+          $_FILES[$key]['error'],
+          $_FILES[$key]['size']
+        );
+      } else {
+        $this->_files[$key] = new File([
+          'name' => $file['name'],
+          'type' => $file['type'],
+          'tmpName' => $file['tmp_name'],
+          'error' => $file['error'],
+          'size' => $file['size']
+        ]);
+      }
     }
   }
 
@@ -462,5 +493,31 @@ class Request
   public function setUriRequest($uriRequest): void
   {
     $this->_uriRequest = $uriRequest;
+  }
+
+  /**
+   * @param string $fileKey
+   * @return File|null
+   */
+  public function getFile(string $fileKey)
+  {
+    return $this->_files[$fileKey] ?? null;
+  }
+
+  /**
+   * @param string $fileKey
+   * @return File[]|array
+   */
+  public function getMultipleFile(string $fileKey): array
+  {
+    return $this->_files[$fileKey] ?? [];
+  }
+
+  /**
+   * @return File[]
+   */
+  public function getFiles(): array
+  {
+    return $this->_files ?? [];
   }
 }

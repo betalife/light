@@ -11,7 +11,7 @@ namespace Light;
 class ErrorController extends Controller
 {
   /**
-   * @var \Exception
+   * @var \Exception|\Error
    */
   private $_exception = null;
 
@@ -53,7 +53,7 @@ class ErrorController extends Controller
   }
 
   /**
-   * @return \Exception|Exception
+   * @return \Exception|\Error
    */
   public function getException()
   {
@@ -61,9 +61,9 @@ class ErrorController extends Controller
   }
 
   /**
-   * @param \Exception $exception
+   * @param \Exception|\Error $exception
    */
-  public function setException(\Exception $exception)
+  public function setException($exception)
   {
     $this->_exception = $exception;
   }
